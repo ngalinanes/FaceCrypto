@@ -1,0 +1,9 @@
+.idea
+.env
+dist
+node_modules
+logs
+*wav
+*jpg
+*png
+*jpeg
