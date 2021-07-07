@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { StyleSheet, Text, View, TouchableOpacity, Modal, Image } from 'react-native';
+import { StyleSheet, Text, View, TouchableOpacity, Modal, Image, TextInput } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons'
 import { Camera } from 'expo-camera';
 import axios from 'axios';
@@ -18,6 +18,9 @@ export default function App() {
   const [capturedPhotoDNI, setCapturedPhotoDNI] = useState(null);
   const [capturedPhotoSelfie, setCapturedPhotoSelfie] = useState(null);
   const [startCamara, setStartCamara] = useState(false);
+  const [modalInicioValidado, setModalInicioValidado] = useState(false);
+  const [usuario, setUsuario] = useState("");
+  const [password, setPassword] = useState("");
 
   const cam = useRef();
 
@@ -35,6 +38,16 @@ export default function App() {
       }
     }
 
+  }
+
+  const validar_login = async () => {
+    if(usuario == ""){
+      alert("Debe ingresar el usuario");
+    } else if(password == ""){
+      alert("Debe ingresar una contraseña");
+    } else if(usuario == "nicolas" && password == "123456"){
+      setModalInicio(true);
+    } else alert("El usuario o contraseña no son correctos.");
   }
 
   const verificar = async () => {
@@ -91,21 +104,53 @@ export default function App() {
   if (hasPermission === false) {
     return <Text>No access to camera</Text>;
   }
+
   return (
     <View style={styles.container}>
-        <Text style={{ textAlign: 'center', marginTop: 300, fontSize: 50 }}>Inicio</Text>
-          <TouchableOpacity style={{ marginLeft: 130 }} onPress={() => { setModalCamara(true); setStartCamara(true) }}>
-            <MaterialIcons style={{ marginLeft: 50, marginTop: 30}} name="assignment-ind" size={40} color={"#008000"} />
-            <Text style={{fontSize: 18, color: 'black', marginRight: 100}}>Validar identidad</Text>
-          </TouchableOpacity>
+        <Text style={{ textAlign: 'center', marginTop: 150, fontSize: 50 }}>Bienvenido </Text>
+          <TextInput placeholder={"Ingresa tu usuario"}
+          onChangeText={(value) => setUsuario(value)}
+          style={{ height: 42, width: "50%", borderBottomWidth: 1, marginLeft: 100, marginTop: "5%"}}
+          />
+          <TextInput secureTextEntry={true} placeholder={"Ingresa tu contraseña"}
+          onChangeText={(value) => setPassword(value)}
+          style={{ height: 42, width: "50%", borderBottomWidth: 1, marginLeft: 100, marginTop: "5%"}}
+          />
+          <View style={{ marginTop: "10%", width: "50%"}}>
+            <TouchableOpacity style={{ borderWidth: 1, height: 42, width: "80%", marginLeft: 200, 
+                                       justifyContent: "center", alignItems: "center", borderRadius: 40
+                                       , alignSelf: "center", textAlign: "center"}}
+                                       onPress={()=> validar_login()}
+                                       >
+            <Text style={{ color: "black" }}>Iniciar sesion</Text>
+            </TouchableOpacity>
+          </View>
+          <View>
+            <TouchableOpacity>
+              <Text style={{ marginLeft: 100, marginTop: "5%" }}>No tienes cuenta? Registrate.</Text>
+            </TouchableOpacity>
+          </View>
 
 {modalInicio &&
 <Modal>
     <View style={styles.container}>
-        <Text style={{ textAlign: 'center', marginTop: 300, fontSize: 50 }}>Dashboard</Text>
+        <Text style={{ textAlign: 'center', marginTop: 300, fontSize: 50 }}>Dashboard usuario sin validar</Text>
+    </View>
+    <TouchableOpacity style={{ marginLeft: 130 }} onPress={() => { setModalCamara(true); setStartCamara(true); setModalInicio(false) }}>
+            <MaterialIcons style={{ marginLeft: 50, marginTop: 30}} name="assignment-ind" size={40} color={"#008000"} />
+            <Text style={{fontSize: 18, color: 'black', marginRight: 100}}>Validar identidad</Text>
+    </TouchableOpacity>
+</Modal>
+}
+
+{modalInicioValidado &&
+<Modal>
+    <View style={styles.container}>
+        <Text style={{ textAlign: 'center', marginTop: 300, fontSize: 50 }}>Dashboard usuario validado</Text>
     </View>
 </Modal>
 }
+
 {startCamara &&
 <Modal animationType="slide" transparent={false} visible={modalCamara}>
             <Camera ref={cam} style={styles.camera} type={type}>
@@ -180,7 +225,7 @@ export default function App() {
           </View>
           <View style={{ flex: 0, flexDirection: 'row', justifyContent: 'flex-end' }}>
             <View>
-              <TouchableOpacity style={{ margin: 10 }} onPress={() => { setModalFinalValido(false); setCapturedPhotoDNI(null); setCapturedPhotoSelfie(null), setModalInicio(true) }}>
+              <TouchableOpacity style={{ margin: 10 }} onPress={() => { setModalFinalValido(false); setCapturedPhotoDNI(null); setCapturedPhotoSelfie(null), setModalInicioValidado(true); setModalInicio(false); }}>
                 <MaterialIcons name="repeat" size={40} color={"#008000"} />
                 <Text>Ir al Dashboard</Text>
               </TouchableOpacity>
