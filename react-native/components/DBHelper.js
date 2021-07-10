@@ -37,7 +37,6 @@ class DBHelper extends React.Component {
       })
       console.log(this.state);
         if (this.state.password == password){
-          Alert.alert('Success!')
           return true
         } else {
           return false
@@ -54,7 +53,7 @@ class DBHelper extends React.Component {
           } else {
               db.transaction(tx => {
                 tx.executeSql(
-                    'INSERT INTO Users (name, password, dni) values (?, ?,?)', 
+                    'INSERT INTO Users (name, password, dni) values (?,?,?)', 
                     [name, password, dni],
                     (txObj, resultSet) => {
                     this.state.password = password;

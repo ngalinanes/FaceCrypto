@@ -75,7 +75,7 @@ export default function App() {
 
     axios({
       method: "post",
-      url: "http://192.168.0.31:8000/api/users/image_identification",
+      url: "http://192.168.0.35:8000/api/users/image_identification",
       data: formData,
       headers: { "Content-Type": "multipart/form-data" },
     })
@@ -94,25 +94,13 @@ export default function App() {
         //handle error
         console.log("Ocurrio un error al validar")
       });
-
-  }
-  const createTable = () => {
-    db.transaction((tx)=>{
-      tx.executeSql(
-        "CREATE TABLE IF NOT EXISTS"
-        +"Users "
-        +"(ID INTEGER PRIMARY KEY AUTOINCREMENTAL, name TEXT, password TEXT, dni TEXT);"
-      )
-    })
   }
 
   useEffect(() => {
     (async () => {
       const { status } = await Camera.requestPermissionsAsync();
       setHasPermission(status === 'granted');
-    })();
-    createTable();
-  }, []);
+    })();}, []);
 
   if (hasPermission === null) {
     return <View />;
@@ -186,7 +174,15 @@ export default function App() {
             <TouchableOpacity style={{ borderWidth: 1, height: 42, width: "80%", marginLeft: 200, 
                                        justifyContent: "center", alignItems: "center", borderRadius: 40
                                        , alignSelf: "center", textAlign: "center"}}
-                                       onPress={()=> dbHelper.newItem(nombre,password,dni,repassword)}
+                                       onPress={()=> {
+                                        if (dbHelper.newItem(nombre,password,dni,repassword)){
+                                          setModalRegistro(false);
+                                          setModalLogin(true);
+                                        } else {
+                                          Alert.alert('Error!','Los datos ingresados no son correctos.') 
+                                         }
+                                       }
+                                     }
                                        >
             <Text style={{ color: "black" }}>Registrarse</Text>
             </TouchableOpacity>
