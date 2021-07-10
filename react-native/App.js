@@ -1,8 +1,21 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { StyleSheet, Text, View, TouchableOpacity, Modal, Image, TextInput } from 'react-native';
+import { StyleSheet, Text, View, TouchableOpacity, Modal, Image, TextInput, Alert } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons'
 import { Camera } from 'expo-camera';
 import axios from 'axios';
+import * as SQLite from 'expo-sqlite'
+import DBHelper from './components/DBHelper';
+
+const db = SQLite.openDatabase(
+  {
+    name: 'MainDB',
+    location: 'default',
+  },
+  () => { },
+  error => { console.error(error) }
+);
+
+const dbHelper = new DBHelper()
 
 export default function App() {
   const [hasPermission, setHasPermission] = useState();
@@ -19,13 +32,16 @@ export default function App() {
   const [capturedPhotoSelfie, setCapturedPhotoSelfie] = useState(null);
   const [startCamara, setStartCamara] = useState(false);
   const [modalInicioValidado, setModalInicioValidado] = useState(false);
-  const [usuario, setUsuario] = useState("");
+  const [modalLogin, setModalLogin] = useState(true);
+  const [modalRegistro, setModalRegistro] = useState(false);
+  const [nombre, setNombre] = useState("");
   const [password, setPassword] = useState("");
+  const [repassword, setRePassword] = useState("");
+  const [dni, setDni] = useState("");
 
   const cam = useRef();
 
   const _takePicture = async () => {
-
     if (cam.current) {
       const option = { quality: 0.5, base64: true, skipProcessing: false };
       let photo = await cam.current.takePictureAsync(option);
@@ -37,18 +53,8 @@ export default function App() {
         setModalDNI(true);
       }
     }
-
   }
 
-  const validar_login = async () => {
-    if(usuario == ""){
-      alert("Debe ingresar el usuario");
-    } else if(password == ""){
-      alert("Debe ingresar una contraseña");
-    } else if(usuario == "nicolas" && password == "123456"){
-      setModalInicio(true);
-    } else alert("El usuario o contraseña no son correctos.");
-  }
 
   const verificar = async () => {
     setModalCargando(true);
@@ -90,12 +96,22 @@ export default function App() {
       });
 
   }
+  const createTable = () => {
+    db.transaction((tx)=>{
+      tx.executeSql(
+        "CREATE TABLE IF NOT EXISTS"
+        +"Users "
+        +"(ID INTEGER PRIMARY KEY AUTOINCREMENTAL, name TEXT, password TEXT, dni TEXT);"
+      )
+    })
+  }
 
   useEffect(() => {
     (async () => {
       const { status } = await Camera.requestPermissionsAsync();
       setHasPermission(status === 'granted');
     })();
+    createTable();
   }, []);
 
   if (hasPermission === null) {
@@ -107,9 +123,13 @@ export default function App() {
 
   return (
     <View style={styles.container}>
+
+{modalLogin &&
+<Modal>
+    <View style={styles.container}>
         <Text style={{ textAlign: 'center', marginTop: 150, fontSize: 50 }}>Bienvenido </Text>
-          <TextInput placeholder={"Ingresa tu usuario"}
-          onChangeText={(value) => setUsuario(value)}
+          <TextInput placeholder={"Ingresa tu DNI - ##.###.###"}
+          onChangeText={(value) => setDni(value)}
           style={{ height: 42, width: "50%", borderBottomWidth: 1, marginLeft: 100, marginTop: "5%"}}
           />
           <TextInput secureTextEntry={true} placeholder={"Ingresa tu contraseña"}
@@ -120,16 +140,65 @@ export default function App() {
             <TouchableOpacity style={{ borderWidth: 1, height: 42, width: "80%", marginLeft: 200, 
                                        justifyContent: "center", alignItems: "center", borderRadius: 40
                                        , alignSelf: "center", textAlign: "center"}}
-                                       onPress={()=> validar_login()}
+                                       onPress={()=> {
+                                         if (dbHelper.getDataDB(password,dni)){
+                                          setModalLogin(false);
+                                          setModalInicio(true);
+                                         } else {
+                                           Alert.alert('Error!','Los datos ingresados no son correctos.') 
+                                          }
+                                        }
+                                      }
                                        >
             <Text style={{ color: "black" }}>Iniciar sesion</Text>
             </TouchableOpacity>
           </View>
           <View>
-            <TouchableOpacity>
+            <TouchableOpacity onPress={()=> {setModalLogin(false); setModalRegistro(true);}}>
               <Text style={{ marginLeft: 100, marginTop: "5%" }}>No tienes cuenta? Registrate.</Text>
             </TouchableOpacity>
           </View>
+      </View>
+</Modal>
+}
+
+{modalRegistro &&
+<Modal>
+<View style={styles.container}>
+        <Text style={{ textAlign: 'center', marginTop: 150, fontSize: 50 }}>Registro </Text>
+          <TextInput placeholder={"Ingresa tu nombre"}
+          onChangeText={(value) => setNombre(value)}
+          style={{ height: 42, width: "50%", borderBottomWidth: 1, marginLeft: 100, marginTop: "5%"}}
+          />
+          <TextInput secureTextEntry={true} placeholder={"Ingresa tu contraseña"}
+          onChangeText={(value) => setPassword(value)}
+          style={{ height: 42, width: "50%", borderBottomWidth: 1, marginLeft: 100, marginTop: "5%"}}
+          />
+          <TextInput secureTextEntry={true} placeholder={"Repite tu contraseña"}
+          onChangeText={(value) => setRePassword(value)}
+          style={{ height: 42, width: "50%", borderBottomWidth: 1, marginLeft: 100, marginTop: "5%"}}
+          />
+           <TextInput placeholder={"Ingresa tu dni - Con puntos: ##.###.###"}
+          onChangeText={(value) => setDni(value)}
+          style={{ height: 42, width: "50%", borderBottomWidth: 1, marginLeft: 100, marginTop: "5%"}}
+          />
+          <View style={{ marginTop: "10%", width: "50%"}}>
+            <TouchableOpacity style={{ borderWidth: 1, height: 42, width: "80%", marginLeft: 200, 
+                                       justifyContent: "center", alignItems: "center", borderRadius: 40
+                                       , alignSelf: "center", textAlign: "center"}}
+                                       onPress={()=> dbHelper.newItem(nombre,password,dni,repassword)}
+                                       >
+            <Text style={{ color: "black" }}>Registrarse</Text>
+            </TouchableOpacity>
+          </View>
+          <View>
+            <TouchableOpacity onPress={()=> {setModalRegistro(false); setModalLogin(true);} }>
+              <Text style={{ marginLeft: 100, marginTop: "5%" }}>Ya tienes cuenta? Inicia sesion.</Text>
+            </TouchableOpacity>
+          </View>
+      </View>
+</Modal>
+}
 
 {modalInicio &&
 <Modal>
@@ -169,95 +238,96 @@ export default function App() {
             </Modal>
 }
 
-      {capturedPhotoSelfie &&
-        <Modal animationType="slide" transparent={false} visible={modalSelfie}>
-          <View style={{ flex: 1, justifyContent: 'center', alignContent: 'center', margin: 20 }}>
-            <Image style={{ width: '100%', height: 300, borderRadius: 20 }}
-              source={{ uri: capturedPhotoSelfie.uri }}>
-            </Image>
-            <View style={{ flex: 0, flexDirection: 'row', justifyContent: 'space-between' }}>
-              <View>
-                <TouchableOpacity style={{ margin: 10 }} onPress={() => { setModalSelfie(false); setCapturedPhotoSelfie(null) }}>
-                  <MaterialIcons name="arrow-back" size={40} color={"#FF0000"} />
-                  <Text style={styles.text}>Volver a tomar selfie</Text>
-                </TouchableOpacity>
-              </View>
-              <View>
-                <TouchableOpacity onPress={() => { setModalSelfie(false); setType(Camera.Constants.Type.back) }}>
-                  <MaterialIcons name="check" size={40} color={"#008000"} />
-                  <Text style={styles.text}>Continuar</Text>
-                </TouchableOpacity>
-              </View>
-            </View>
-          </View>
-        </Modal>
-      }
+{capturedPhotoSelfie &&
+  <Modal animationType="slide" transparent={false} visible={modalSelfie}>
+    <View style={{ flex: 1, justifyContent: 'center', alignContent: 'center', margin: 20 }}>
+      <Image style={{ width: '100%', height: 300, borderRadius: 20 }}
+        source={{ uri: capturedPhotoSelfie.uri }}>
+      </Image>
+      <View style={{ flex: 0, flexDirection: 'row', justifyContent: 'space-between' }}>
+        <View>
+          <TouchableOpacity style={{ margin: 10 }} onPress={() => { setModalSelfie(false); setCapturedPhotoSelfie(null) }}>
+            <MaterialIcons name="arrow-back" size={40} color={"#FF0000"} />
+            <Text style={styles.text}>Volver a tomar selfie</Text>
+          </TouchableOpacity>
+        </View>
+        <View>
+          <TouchableOpacity onPress={() => { setModalSelfie(false); setType(Camera.Constants.Type.back) }}>
+            <MaterialIcons name="check" size={40} color={"#008000"} />
+            <Text style={styles.text}>Continuar</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+    </View>
+  </Modal>
+}
 
-      {capturedPhotoDNI &&
-        <Modal animationType="slide" transparent={false} visible={modalDNI}>
-          <View style={{ flex: 1, justifyContent: 'center', alignContent: 'center', margin: 20 }}>
-            <Image style={{ width: '100%', height: 300, borderRadius: 20 }}
-              source={{ uri: capturedPhotoDNI.uri }}>
-            </Image>
+{capturedPhotoDNI &&
+  <Modal animationType="slide" transparent={false} visible={modalDNI}>
+    <View style={{ flex: 1, justifyContent: 'center', alignContent: 'center', margin: 20 }}>
+      <Image style={{ width: '100%', height: 300, borderRadius: 20 }}
+        source={{ uri: capturedPhotoDNI.uri }}>
+      </Image>
 
-            <View style={{ flex: 0, flexDirection: 'row', justifyContent: 'space-between' }}>
-              <View>
-                <TouchableOpacity style={{ margin: 10 }} onPress={() => { setModalDNI(false); setCapturedPhotoDNI(null) }}>
-                  <MaterialIcons name="arrow-back" size={40} color={"#FF0000"} />
-                  <Text style={styles.text}>Volver a tomar DNI</Text>
-                </TouchableOpacity>
-              </View>
-              <View>
-                <TouchableOpacity onPress={() => { setModalDNI(false); verificar(); setType(Camera.Constants.Type.front) }}>
-                  <MaterialIcons name="check" size={40} color={"#008000"} />
-                  <Text style={styles.text}>Contiunar</Text>
-                </TouchableOpacity>
-              </View>
-            </View>
-          </View>
-        </Modal>
-      }
-      {modalFinalValido &&
-        <Modal animationType="slide" transparent={false} visible={modalFinalValido}>
-          <View style={{ flex: 1, justifyContent: 'center', alignContent: 'center', margin: 25 }}>
-            <MaterialIcons name="check-circle" size={300} color={"#008000"} />
-            <Text style={{textAlign:'center'}}>Su identidad fue validada.</Text>
-          </View>
-          <View style={{ flex: 0, flexDirection: 'row', justifyContent: 'flex-end' }}>
-            <View>
-              <TouchableOpacity style={{ margin: 10 }} onPress={() => { setModalFinalValido(false); setCapturedPhotoDNI(null); setCapturedPhotoSelfie(null), setModalInicioValidado(true); setModalInicio(false); }}>
-                <MaterialIcons name="repeat" size={40} color={"#008000"} />
-                <Text>Ir al Dashboard</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        </Modal>
-      }
-      {modalFinalInvalido &&
-        <Modal animationType="slide" transparent={false} visible={modalFinalInvalido}>
-          <View style={{ flex: 1, justifyContent: 'center', alignContent: 'center', margin: 25 }}>
-            <MaterialIcons name="error" size={300} color={"#FF0000"} />
-            <Text style={{textAlign:'center'}}>No se pudo validar su identidad.</Text>
-          </View>
-          <View style={{ flex: 0, flexDirection: 'row', justifyContent: 'flex-end' }}>
-            <View>
-              <TouchableOpacity style={{ margin: 10 }} onPress={() => { setModalFinalInvalido(false); setCapturedPhotoDNI(null); setCapturedPhotoSelfie(null); }}>
-                <MaterialIcons name="repeat" size={40} color={"#008000"} /><Text>Volver a intentar</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        </Modal>
-      }
+      <View style={{ flex: 0, flexDirection: 'row', justifyContent: 'space-between' }}>
+        <View>
+          <TouchableOpacity style={{ margin: 10 }} onPress={() => { setModalDNI(false); setCapturedPhotoDNI(null) }}>
+            <MaterialIcons name="arrow-back" size={40} color={"#FF0000"} />
+            <Text style={styles.text}>Volver a tomar DNI</Text>
+          </TouchableOpacity>
+        </View>
+        <View>
+          <TouchableOpacity onPress={() => { setModalDNI(false); verificar(); setType(Camera.Constants.Type.front) }}>
+            <MaterialIcons name="check" size={40} color={"#008000"} />
+            <Text style={styles.text}>Contiunar</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+    </View>
+  </Modal>
+}
 
-      {modalCargando &&
-        <Modal animationType="slide" transparent={false} visible={modalCargando}>
-          <View style={{ flex: 1, justifyContent: 'center', alignContent: 'center', margin: 25 }}>
-            <MaterialIcons name="cloud-upload" size={300} color="black" />
-            <Text style={{textAlign:'center'}}>Cargando imagenes...</Text>
-          </View>
-        </Modal>
-      }
+{modalFinalValido &&
+  <Modal animationType="slide" transparent={false} visible={modalFinalValido}>
+    <View style={{ flex: 1, justifyContent: 'center', alignContent: 'center', margin: 25 }}>
+      <MaterialIcons name="check-circle" size={300} color={"#008000"} />
+      <Text style={{textAlign:'center'}}>Su identidad fue validada.</Text>
+    </View>
+    <View style={{ flex: 0, flexDirection: 'row', justifyContent: 'flex-end' }}>
+      <View>
+        <TouchableOpacity style={{ margin: 10 }} onPress={() => { setModalFinalValido(false); setCapturedPhotoDNI(null); setCapturedPhotoSelfie(null), setModalInicioValidado(true); setModalInicio(false); }}>
+          <MaterialIcons name="repeat" size={40} color={"#008000"} />
+          <Text>Ir al Dashboard</Text>
+        </TouchableOpacity>
+      </View>
+    </View>
+  </Modal>
+}
 
+{modalFinalInvalido &&
+  <Modal animationType="slide" transparent={false} visible={modalFinalInvalido}>
+    <View style={{ flex: 1, justifyContent: 'center', alignContent: 'center', margin: 25 }}>
+      <MaterialIcons name="error" size={300} color={"#FF0000"} />
+      <Text style={{textAlign:'center'}}>No se pudo validar su identidad.</Text>
+    </View>
+    <View style={{ flex: 0, flexDirection: 'row', justifyContent: 'flex-end' }}>
+      <View>
+        <TouchableOpacity style={{ margin: 10 }} onPress={() => { setModalFinalInvalido(false); setCapturedPhotoDNI(null); setCapturedPhotoSelfie(null); }}>
+          <MaterialIcons name="repeat" size={40} color={"#008000"} /><Text>Volver a intentar</Text>
+        </TouchableOpacity>
+      </View>
+    </View>
+  </Modal>
+}
+
+{modalCargando &&
+  <Modal animationType="slide" transparent={false} visible={modalCargando}>
+    <View style={{ flex: 1, justifyContent: 'center', alignContent: 'center', margin: 25 }}>
+      <MaterialIcons name="cloud-upload" size={300} color="black" />
+      <Text style={{textAlign:'center'}}>Cargando imagenes...</Text>
+    </View>
+  </Modal>
+}
     </View>
   );
 }
