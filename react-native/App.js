@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { StyleSheet, Text, View, TouchableOpacity, Modal, Image, TextInput, Alert, ScrollView } from 'react-native';
+import { StyleSheet, Text, View, Vibration, TouchableOpacity, Modal, Image, TextInput, Alert, ScrollView } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons'
 import { Camera } from 'expo-camera';
 import axios from 'axios';
@@ -46,6 +46,13 @@ export default function App() {
   const [btcWallet, setBtcWallet] = useState("");
   const [ethWallet, setEthWallet] = useState("");
   const [modalCrypto, setModalCrypto] = useState(false);
+  const [valorBtc, setValorBtc] = useState(50);
+  const [valorEth, setValorEth] = useState(25);
+  const [nuevoValorBtc, setNuevoValorBtc] = useState(0);
+  const [nuevoValorEth, setNuevoValorEth] = useState(0);
+  const [modalAdmin, setModalAdmin] = useState(false);
+  const [valorVentaBtc, setValorVentaBtc] = useState(valorBtc*1.10)
+  const [valorVentaEth, setValorVentaEth] = useState(valorEth*1.10)
 
   const shareMessage = (wallet, moneda) => {
     Share.share({
@@ -112,8 +119,10 @@ export default function App() {
         var respuesta = Number(data.substring(pos + 12, pos + 20));
         if (isNaN(respuesta) || respuesta < 80) {
           setModalFinalInvalido(true)
+          Vibration.vibrate();
         } else {
-          setModalFinalValido(true)
+          setModalFinalValido(true);
+          Vibration.vibrate();
         }
       })
       .catch(function (response) {
@@ -159,12 +168,13 @@ export default function App() {
                                          if (dbHelper.getDataDB(password,dni)){
                                           if (dni == 'admin'){
                                             setModalLogin(false);
-                                            setModalInicioValidado(true);
+                                            setModalAdmin(true);
                                           } else {
                                             setModalLogin(false);
                                             setModalInicio(true);}
                                          } else {
-                                           Alert.alert('Error!','Los datos ingresados no son correctos.') 
+                                           Vibration.vibrate(); 
+                                           Alert.alert('Error!','Los datos ingresados no son correctos.')
                                           }
                                         }
                                       }
@@ -209,8 +219,9 @@ export default function App() {
                                         if (dbHelper.newItem(nombre,password,dni,repassword)){
                                           setModalRegistro(false);
                                           setModalLogin(true);
-                                        } else {
-                                          Alert.alert('Error!','Los datos ingresados no son correctos.') 
+                                        } else { 
+                                          Vibration.vibrate();
+                                          Alert.alert('Error!','Los datos ingresados no son correctos.')
                                          }
                                        }
                                      }
@@ -269,22 +280,68 @@ export default function App() {
 </Modal>
 }
 
+{modalAdmin &&
+  <Modal>
+    <ScrollView>
+      <Text style={{ textAlign: 'center', marginTop: 40, fontSize: 30 }}>Admin Dashboard</Text>
+      <Text style={{ marginTop: 50, fontSize: 15, marginLeft: 20 }}>Valor actual del BTC: {valorBtc}</Text>
+      <Text style={{ marginTop: 10, fontSize: 15, marginLeft: 20 }}>Valor actual del ETH: {valorEth}</Text>
+      <ScrollView contentContainerStyle={{ flexDirection: 'row'}}>
+        <Text style={{ textAlign: 'center', marginTop: 30, fontSize: 25, marginLeft: 100 }}>Valor BTC:</Text>
+        <TextInput
+            style={{ textAlign: 'center', width: "15%", marginLeft: 10, borderBottomWidth: 1}}
+            onChangeText={(nuevoValorBtc) => setNuevoValorBtc(parseInt(nuevoValorBtc,10))}
+        />
+      </ScrollView>
+      <TouchableOpacity style={{ marginLeft: 140 }} onPress={() => {setValorBtc(nuevoValorBtc); setValorVentaBtc(nuevoValorBtc*1.10)}}>
+            <MaterialIcons style={{ marginLeft: 50, marginTop: 10}} name="control-point" size={35} color={"#008000"} />
+            <Text style={{fontSize: 14, color: 'black', marginLeft: 25}}>Modificar BTC</Text>
+      </TouchableOpacity>
+      <ScrollView contentContainerStyle={{ flexDirection: 'row'}}>
+        <Text style={{ textAlign: 'center', marginTop: 20, fontSize: 25, marginLeft: 100 }}>Valor ETH:</Text>
+        <TextInput
+            style={{ textAlign: 'center', width: "15%", marginLeft: 10, borderBottomWidth: 1, marginTop: "2%"}}
+            onChangeText={(nuevoValorEth) => setNuevoValorEth(parseInt(nuevoValorEth,10))}
+        />
+      </ScrollView>
+      <TouchableOpacity style={{ marginLeft: 140 }} onPress={() => {setValorEth(nuevoValorEth); setValorVentaEth(nuevoValorEth*1.10)}}>
+            <MaterialIcons style={{ marginLeft: 50, marginTop: 10}} name="control-point" size={35} color={"#008000"} />
+            <Text style={{fontSize: 14, color: 'black', marginLeft: 25}}>Modificar ETH</Text>
+      </TouchableOpacity>
+      <TouchableOpacity
+              activeOpacity={0.7}
+              style={styles.buttonStyle}
+              onPress={() => {setModalAdmin(false); setModalCrypto(true);}}
+              >
+              <Text style={styles.buttonTextStyle}>
+                Comprar Crypto
+              </Text>
+      </TouchableOpacity>
+      <TouchableOpacity activeOpacity={0.7} style={styles.buttonLogOut} onPress={() => {setModalAdmin(false); setModalLogin(true);}} >
+        <Text style={styles.buttonTextLogOut}>Cerrar sesion</Text>
+      </TouchableOpacity>
+    </ScrollView>
+  </Modal>
+}
+
 {modalCrypto &&
   <Modal>
     <ScrollView>
     <Text style={{ textAlign: 'center', marginTop: 40, fontSize: 25 }}>Saldo en dolares: U$S {saldo}</Text>
-    <Text style={{ textAlign: 'center', marginTop: 20, fontSize: 15 }}>Bitcoin - Precio de compra: U$S 50</Text>
-        <Text style={{ textAlign: 'center', marginTop: 5, fontSize: 15 }}>Bitcoin - Precio de venta: U$S 48</Text>
+    <Text style={{ textAlign: 'center', marginTop: 20, fontSize: 15 }}>Bitcoin - Precio de compra: U$S {valorBtc}</Text>
+        <Text style={{ textAlign: 'center', marginTop: 5, fontSize: 15 }}>Bitcoin - Precio de venta: U$S {valorVentaBtc.toFixed(0)}</Text>
         <ScrollView contentContainerStyle={{ flexDirection: 'row'}}>
-        <TouchableOpacity style={{ marginLeft: 90 }} onPress={() => {if (saldo < 50) {
+        <TouchableOpacity style={{ marginLeft: 90 }} onPress={() => {if (saldo < valorBtc) {
+          Vibration.vibrate();
           Alert.alert('Banca!', 'No tenes saldo suficiente');
         } else {
-          setSaldo(saldo-50); setBitcoin(bitcoin+1)}}
+          setSaldo(saldo-valorBtc); setBitcoin(bitcoin+1)}}
           }>
             <MaterialIcons style={{ marginLeft: 35, marginTop: 10}} name="add-circle-outline" size={35} color={"#008000"} />
             <Text style={{fontSize: 14, color: 'black'}}>Comprar BTC</Text>
         </TouchableOpacity>
         <TouchableOpacity style={{ marginLeft: 10 }} onPress={() => {if (bitcoin < 1) {
+          Vibration.vibrate();
           Alert.alert('Banca!', 'No tenes saldo suficiente.');
         } else {
           setSaldo(saldo+48); setBitcoin(bitcoin-1)}}
@@ -306,18 +363,20 @@ export default function App() {
             </Text>
           </TouchableOpacity>
 
-        <Text style={{ textAlign: 'center', marginTop: 50, fontSize: 15 }}>Ethereum - Precio de compra: U$S 25</Text>
-        <Text style={{ textAlign: 'center', marginTop: 5, fontSize: 15 }}>Ethereum - Precio de venta: U$S 21</Text>
+        <Text style={{ textAlign: 'center', marginTop: 50, fontSize: 15 }}>Ethereum - Precio de compra: U$S {valorEth}</Text>
+        <Text style={{ textAlign: 'center', marginTop: 5, fontSize: 15 }}>Ethereum - Precio de venta: U$S {valorVentaEth.toFixed(0)}</Text>
         <ScrollView contentContainerStyle={{ flexDirection: 'row'}}>
-        <TouchableOpacity style={{ marginLeft: 90 }} onPress={() => {if (saldo < 25) {
+        <TouchableOpacity style={{ marginLeft: 90 }} onPress={() => {if (saldo < valorEth) {
+          Vibration.vibrate();
           Alert.alert('Banca!', 'No tenes saldo suficiente');
         } else {
-          setSaldo(saldo-25); setEthereum(ethereum+1)}}
+          setSaldo(saldo-valorEth); setEthereum(ethereum+1)}}
           }>
             <MaterialIcons style={{ marginLeft: 35, marginTop: 10}} name="add-circle-outline" size={35} color={"#008000"} />
             <Text style={{fontSize: 14, color: 'black'}}>Comprar ETH</Text>
         </TouchableOpacity>
         <TouchableOpacity style={{ marginLeft: 10 }} onPress={() => {if (ethereum < 1) {
+          Vibration.vibrate();
           Alert.alert('Banca!', 'No tenes saldo suficiente.');
         } else {
           setSaldo(saldo+21); setEthereum(ethereum-1)}}
@@ -328,24 +387,14 @@ export default function App() {
         </ScrollView>
         <Text style={{ textAlign: 'center', marginTop: 20, fontSize: 15, fontWeight: 'bold' }}>Saldo en Ethereum: {ethereum}</Text>
         <Text style={{ textAlign: 'center', marginTop: 10, fontSize: 12 }}>ETH Wallet: {ethWallet}</Text>
-        
-            <TouchableOpacity
-              activeOpacity={0.7}
-              style={styles.buttonStyle}
-              onPress={() => shareMessage(ethWallet,'ETH')}
-              >
-              <Text style={styles.buttonTextStyle}>
-                ETH - Compartir tu wallet
-              </Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              activeOpacity={0.7}
-              style={styles.buttonDashboard}
-              onPress={() => {setModalCrypto(false); setModalInicioValidado(true);}}
-              >
-              <Text style={styles.buttonTextDashboard}>
-                Dashboard
-              </Text>
+        <TouchableOpacity activeOpacity={0.7} style={styles.buttonStyle} onPress={() => shareMessage(ethWallet,'ETH')} >
+          <Text style={styles.buttonTextStyle}>ETH - Compartir tu wallet</Text>
+        </TouchableOpacity>
+        <TouchableOpacity activeOpacity={0.7} style={styles.buttonDashboard} onPress={() => {setModalCrypto(false); setModalInicioValidado(true);}} >
+          <Text style={styles.buttonTextDashboard}>Dashboard</Text>
+        </TouchableOpacity>
+        <TouchableOpacity activeOpacity={0.7} style={styles.buttonLogOut} onPress={() => {setModalCrypto(false); setModalLogin(true);}} >
+          <Text style={styles.buttonTextLogOut}>Cerrar sesion</Text>
         </TouchableOpacity>
     </ScrollView>
   </Modal>
@@ -500,13 +549,26 @@ const styles = StyleSheet.create({
   },
   buttonDashboard: {
     justifyContent: 'center',
-    marginTop: 90,
+    marginTop: 50,
     padding: 10,
     backgroundColor: 'black',
     marginRight: 2,
     marginLeft: 2,
   },
   buttonTextDashboard: {
+    color: '#fff',
+    textAlign: 'center',
+    fontSize: 18
+  },
+  buttonLogOut: {
+    justifyContent: 'center',
+    marginTop: 10,
+    padding: 10,
+    backgroundColor: 'red',
+    marginRight: 2,
+    marginLeft: 2,
+  },
+  buttonTextLogOut: {
     color: '#fff',
     textAlign: 'center',
     fontSize: 18
