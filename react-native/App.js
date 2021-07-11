@@ -45,6 +45,7 @@ export default function App() {
   const [carga, setCarga] = useState(0);
   const [btcWallet, setBtcWallet] = useState("");
   const [ethWallet, setEthWallet] = useState("");
+  const [modalCrypto, setModalCrypto] = useState(false);
 
   const shareMessage = (wallet, moneda) => {
     Share.share({
@@ -243,7 +244,36 @@ export default function App() {
     <ScrollView style={styles.container}>
         <Text style={{ textAlign: 'center', marginTop: 50, fontSize: 20 }}>FaceCrypto - Dashboard</Text>
         <Text style={{ textAlign: 'center', marginTop: 20, fontSize: 25 }}>Saldo en dolares: U$S {saldo}</Text>
-        <Text style={{ textAlign: 'center', marginTop: 20, fontSize: 15 }}>Bitcoin - Precio de compra: U$S 50</Text>
+        <Text style={{ textAlign: 'center', marginTop: 60, fontSize: 25 }}>Recarga tu saldo:</Text>
+        <TextInput placeholder={"Cuanto queres recargar?"}
+          onChangeText={(value) => setCarga( parseInt(value, 10))}
+          keyboardType='numeric'
+          style={{ textAlign: 'center', width: "45%", borderBottomWidth: 1, marginLeft: 120, marginTop: "2%"}}
+          />
+        <TouchableOpacity style={{ marginLeft: 140 }} onPress={() => setSaldo(saldo+carga)}>
+            <MaterialIcons style={{ marginLeft: 50, marginTop: 10}} name="control-point" size={35} color={"#008000"} />
+            <Text style={{fontSize: 14, color: 'black', marginLeft: 25}}>Carga Saldo</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+              activeOpacity={0.7}
+              style={styles.buttonStyle}
+              onPress={() => {setModalInicioValidado(false); setModalCrypto(true);}}
+              >
+              <Text style={styles.buttonTextStyle}>
+                Comprar Crypto
+              </Text>
+        </TouchableOpacity>
+
+        </ScrollView>
+</Modal>
+}
+
+{modalCrypto &&
+  <Modal>
+    <ScrollView>
+    <Text style={{ textAlign: 'center', marginTop: 40, fontSize: 25 }}>Saldo en dolares: U$S {saldo}</Text>
+    <Text style={{ textAlign: 'center', marginTop: 20, fontSize: 15 }}>Bitcoin - Precio de compra: U$S 50</Text>
         <Text style={{ textAlign: 'center', marginTop: 5, fontSize: 15 }}>Bitcoin - Precio de venta: U$S 48</Text>
         <ScrollView contentContainerStyle={{ flexDirection: 'row'}}>
         <TouchableOpacity style={{ marginLeft: 90 }} onPress={() => {if (saldo < 50) {
@@ -263,7 +293,6 @@ export default function App() {
             <Text style={{fontSize: 14, color: 'black', marginLeft: 20}}>Vender BTC</Text>
         </TouchableOpacity>
         </ScrollView>
-        {/* {setBtcWallet(getRandomString())} */}
         <Text style={{ textAlign: 'center', marginTop: 10, fontSize: 15, fontWeight: "bold" }}>Saldo en Bitcoins: {bitcoin}</Text>
         <Text style={{ textAlign: 'center', marginTop: 10, fontSize: 12 }}>BTC Wallet: {btcWallet}</Text>
 
@@ -277,7 +306,7 @@ export default function App() {
             </Text>
           </TouchableOpacity>
 
-        <Text style={{ textAlign: 'center', marginTop: 20, fontSize: 15 }}>Ethereum - Precio de compra: U$S 25</Text>
+        <Text style={{ textAlign: 'center', marginTop: 50, fontSize: 15 }}>Ethereum - Precio de compra: U$S 25</Text>
         <Text style={{ textAlign: 'center', marginTop: 5, fontSize: 15 }}>Ethereum - Precio de venta: U$S 21</Text>
         <ScrollView contentContainerStyle={{ flexDirection: 'row'}}>
         <TouchableOpacity style={{ marginLeft: 90 }} onPress={() => {if (saldo < 25) {
@@ -297,7 +326,6 @@ export default function App() {
             <Text style={{fontSize: 14, color: 'black', marginLeft: 20}}>Vender ETH</Text>
         </TouchableOpacity>
         </ScrollView>
-        {/* {setEthWallet(getRandomString())} */}
         <Text style={{ textAlign: 'center', marginTop: 20, fontSize: 15, fontWeight: 'bold' }}>Saldo en Ethereum: {ethereum}</Text>
         <Text style={{ textAlign: 'center', marginTop: 10, fontSize: 12 }}>ETH Wallet: {ethWallet}</Text>
         
@@ -310,19 +338,17 @@ export default function App() {
                 ETH - Compartir tu wallet
               </Text>
             </TouchableOpacity>
-        
-        <Text style={{ textAlign: 'center', marginTop: 60, fontSize: 25 }}>Recarga tu saldo:</Text>
-        <TextInput placeholder={"Cuanto queres recargar?"}
-          onChangeText={(value) => setCarga( parseInt(value, 10))}
-          keyboardType='numeric'
-          style={{ textAlign: 'center', width: "45%", borderBottomWidth: 1, marginLeft: 120, marginTop: "2%"}}
-          />
-        <TouchableOpacity style={{ marginLeft: 140 }} onPress={() => setSaldo(saldo+carga)}>
-            <MaterialIcons style={{ marginLeft: 50, marginTop: 10}} name="control-point" size={35} color={"#008000"} />
-            <Text style={{fontSize: 14, color: 'black', marginLeft: 25}}>Carga Saldo</Text>
+            <TouchableOpacity
+              activeOpacity={0.7}
+              style={styles.buttonDashboard}
+              onPress={() => {setModalCrypto(false); setModalInicioValidado(true);}}
+              >
+              <Text style={styles.buttonTextDashboard}>
+                Dashboard
+              </Text>
         </TouchableOpacity>
-        </ScrollView>
-</Modal>
+    </ScrollView>
+  </Modal>
 }
 
 {startCamara &&
@@ -471,5 +497,18 @@ const styles = StyleSheet.create({
   buttonTextStyle: {
     color: '#fff',
     textAlign: 'center',
+  },
+  buttonDashboard: {
+    justifyContent: 'center',
+    marginTop: 90,
+    padding: 10,
+    backgroundColor: 'black',
+    marginRight: 2,
+    marginLeft: 2,
+  },
+  buttonTextDashboard: {
+    color: '#fff',
+    textAlign: 'center',
+    fontSize: 18
   }
 });
