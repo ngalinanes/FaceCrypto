@@ -1,10 +1,11 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { StyleSheet, Text, View, TouchableOpacity, Modal, Image, TextInput, Alert } from 'react-native';
+import { StyleSheet, Text, View, TouchableOpacity, Modal, Image, TextInput, Alert, ScrollView } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons'
 import { Camera } from 'expo-camera';
 import axios from 'axios';
 import * as SQLite from 'expo-sqlite'
 import DBHelper from './components/DBHelper';
+import {Share} from 'react-native';
 
 const db = SQLite.openDatabase(
   {
@@ -38,8 +39,32 @@ export default function App() {
   const [password, setPassword] = useState("");
   const [repassword, setRePassword] = useState("");
   const [dni, setDni] = useState("");
+  const [saldo, setSaldo] = useState(1000);
+  const [bitcoin, setBitcoin] = useState(0);
+  const [ethereum, setEthereum] = useState(0);
+  const [carga, setCarga] = useState(0);
+  const [btcWallet, setBtcWallet] = useState("");
+  const [ethWallet, setEthWallet] = useState("");
+
+  const shareMessage = (wallet, moneda) => {
+    Share.share({
+      message: 'FaceCrypto. Te comparto mi wallet de '+moneda+': '+wallet
+    })
+      .then((result) => console.log(result))
+      .catch((errorMsg) => console.log(errorMsg));
+  };
 
   const cam = useRef();
+
+  const getRandomString = () => {
+    var randomChars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+    var result = '';
+    var length = 24;
+    for ( var i = 0; i < length; i++ ) {
+        result += randomChars.charAt(Math.floor(Math.random() * randomChars.length));
+    }
+    return result;
+  }
 
   const _takePicture = async () => {
     if (cam.current) {
@@ -75,7 +100,7 @@ export default function App() {
 
     axios({
       method: "post",
-      url: "http://192.168.0.35:8000/api/users/image_identification",
+      url: "http://192.168.0.31:8000/api/users/image_identification",
       data: formData,
       headers: { "Content-Type": "multipart/form-data" },
     })
@@ -92,7 +117,8 @@ export default function App() {
       })
       .catch(function (response) {
         //handle error
-        console.log("Ocurrio un error al validar")
+        console.log("Ocurrio un error al validar");
+        // modalInicio(true);
       });
   }
 
@@ -100,7 +126,7 @@ export default function App() {
     (async () => {
       const { status } = await Camera.requestPermissionsAsync();
       setHasPermission(status === 'granted');
-    })();}, []);
+    })(); setEthWallet(getRandomString()); setBtcWallet(getRandomString()) }, []);
 
   if (hasPermission === null) {
     return <View />;
@@ -130,8 +156,12 @@ export default function App() {
                                        , alignSelf: "center", textAlign: "center"}}
                                        onPress={()=> {
                                          if (dbHelper.getDataDB(password,dni)){
-                                          setModalLogin(false);
-                                          setModalInicio(true);
+                                          if (dni == 'admin'){
+                                            setModalLogin(false);
+                                            setModalInicioValidado(true);
+                                          } else {
+                                            setModalLogin(false);
+                                            setModalInicio(true);}
                                          } else {
                                            Alert.alert('Error!','Los datos ingresados no son correctos.') 
                                           }
@@ -210,9 +240,88 @@ export default function App() {
 
 {modalInicioValidado &&
 <Modal>
-    <View style={styles.container}>
-        <Text style={{ textAlign: 'center', marginTop: 300, fontSize: 50 }}>Dashboard usuario validado</Text>
-    </View>
+    <ScrollView style={styles.container}>
+        <Text style={{ textAlign: 'center', marginTop: 50, fontSize: 20 }}>FaceCrypto - Dashboard</Text>
+        <Text style={{ textAlign: 'center', marginTop: 20, fontSize: 25 }}>Saldo en dolares: U$S {saldo}</Text>
+        <Text style={{ textAlign: 'center', marginTop: 20, fontSize: 15 }}>Bitcoin - Precio de compra: U$S 50</Text>
+        <Text style={{ textAlign: 'center', marginTop: 5, fontSize: 15 }}>Bitcoin - Precio de venta: U$S 48</Text>
+        <ScrollView contentContainerStyle={{ flexDirection: 'row'}}>
+        <TouchableOpacity style={{ marginLeft: 90 }} onPress={() => {if (saldo < 50) {
+          Alert.alert('Banca!', 'No tenes saldo suficiente');
+        } else {
+          setSaldo(saldo-50); setBitcoin(bitcoin+1)}}
+          }>
+            <MaterialIcons style={{ marginLeft: 35, marginTop: 10}} name="add-circle-outline" size={35} color={"#008000"} />
+            <Text style={{fontSize: 14, color: 'black'}}>Comprar BTC</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={{ marginLeft: 10 }} onPress={() => {if (bitcoin < 1) {
+          Alert.alert('Banca!', 'No tenes saldo suficiente.');
+        } else {
+          setSaldo(saldo+48); setBitcoin(bitcoin-1)}}
+          }>
+            <MaterialIcons style={{ marginLeft: 35, marginTop: 10, marginLeft: 40}} name="remove-circle-outline" size={35} color={"red"} />
+            <Text style={{fontSize: 14, color: 'black', marginLeft: 20}}>Vender BTC</Text>
+        </TouchableOpacity>
+        </ScrollView>
+        {/* {setBtcWallet(getRandomString())} */}
+        <Text style={{ textAlign: 'center', marginTop: 10, fontSize: 15, fontWeight: "bold" }}>Saldo en Bitcoins: {bitcoin}</Text>
+        <Text style={{ textAlign: 'center', marginTop: 10, fontSize: 12 }}>BTC Wallet: {btcWallet}</Text>
+
+          <TouchableOpacity
+            activeOpacity={0.7}
+            style={styles.buttonStyle}
+            onPress={() => shareMessage(btcWallet,'BTC')}
+            >
+            <Text style={styles.buttonTextStyle}>
+              BTC - Compartir tu wallet
+            </Text>
+          </TouchableOpacity>
+
+        <Text style={{ textAlign: 'center', marginTop: 20, fontSize: 15 }}>Ethereum - Precio de compra: U$S 25</Text>
+        <Text style={{ textAlign: 'center', marginTop: 5, fontSize: 15 }}>Ethereum - Precio de venta: U$S 21</Text>
+        <ScrollView contentContainerStyle={{ flexDirection: 'row'}}>
+        <TouchableOpacity style={{ marginLeft: 90 }} onPress={() => {if (saldo < 25) {
+          Alert.alert('Banca!', 'No tenes saldo suficiente');
+        } else {
+          setSaldo(saldo-25); setEthereum(ethereum+1)}}
+          }>
+            <MaterialIcons style={{ marginLeft: 35, marginTop: 10}} name="add-circle-outline" size={35} color={"#008000"} />
+            <Text style={{fontSize: 14, color: 'black'}}>Comprar ETH</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={{ marginLeft: 10 }} onPress={() => {if (ethereum < 1) {
+          Alert.alert('Banca!', 'No tenes saldo suficiente.');
+        } else {
+          setSaldo(saldo+21); setEthereum(ethereum-1)}}
+          }>
+            <MaterialIcons style={{ marginLeft: 35, marginTop: 10, marginLeft: 40}} name="remove-circle-outline" size={35} color={"red"} />
+            <Text style={{fontSize: 14, color: 'black', marginLeft: 20}}>Vender ETH</Text>
+        </TouchableOpacity>
+        </ScrollView>
+        {/* {setEthWallet(getRandomString())} */}
+        <Text style={{ textAlign: 'center', marginTop: 20, fontSize: 15, fontWeight: 'bold' }}>Saldo en Ethereum: {ethereum}</Text>
+        <Text style={{ textAlign: 'center', marginTop: 10, fontSize: 12 }}>ETH Wallet: {ethWallet}</Text>
+        
+            <TouchableOpacity
+              activeOpacity={0.7}
+              style={styles.buttonStyle}
+              onPress={() => shareMessage(ethWallet,'ETH')}
+              >
+              <Text style={styles.buttonTextStyle}>
+                ETH - Compartir tu wallet
+              </Text>
+            </TouchableOpacity>
+        
+        <Text style={{ textAlign: 'center', marginTop: 60, fontSize: 25 }}>Recarga tu saldo:</Text>
+        <TextInput placeholder={"Cuanto queres recargar?"}
+          onChangeText={(value) => setCarga( parseInt(value, 10))}
+          keyboardType='numeric'
+          style={{ textAlign: 'center', width: "45%", borderBottomWidth: 1, marginLeft: 120, marginTop: "2%"}}
+          />
+        <TouchableOpacity style={{ marginLeft: 140 }} onPress={() => setSaldo(saldo+carga)}>
+            <MaterialIcons style={{ marginLeft: 50, marginTop: 10}} name="control-point" size={35} color={"#008000"} />
+            <Text style={{fontSize: 14, color: 'black', marginLeft: 25}}>Carga Saldo</Text>
+        </TouchableOpacity>
+        </ScrollView>
 </Modal>
 }
 
@@ -351,4 +460,16 @@ const styles = StyleSheet.create({
     fontSize: 18,
     color: 'black',
   },
+  buttonStyle: {
+    justifyContent: 'center',
+    marginTop: 15,
+    padding: 10,
+    backgroundColor: '#8ad24e',
+    marginRight: 2,
+    marginLeft: 2,
+  },
+  buttonTextStyle: {
+    color: '#fff',
+    textAlign: 'center',
+  }
 });
