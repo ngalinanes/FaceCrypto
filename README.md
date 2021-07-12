@@ -1,5 +1,7 @@
 # FaceCrypto
 
+Proyecto universitario. Aplicacion para la simulacion de compra y venta de criptomonedas. Requiere la validacion de identidad basado en reconocimiento facial con una imagen del rostro y otra del DNI, para poder realizar transacciones.
+
 Tanto en el backend como el frontend primero es necesario correr "npm install" para descargar dependencias por primera vez.
 
 ## /node/.env
