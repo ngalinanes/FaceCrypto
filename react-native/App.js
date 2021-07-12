@@ -123,7 +123,6 @@ export default function App() {
           Vibration.vibrate();
         } else {
           setModalFinalValido(true);
-          Vibration.vibrate();
         }
       })
       .catch(function (response) {
