@@ -88,7 +88,7 @@ app.post('/api/users/image_identification', multerImages, async function (req: a
                 dniFront = file
             } else if (file.fieldname == 'photo'){
                 photoFile = file
-            }
+            } 
         });
         //Inicializamos la instancia de AWS Rekognition 
         const rekognition = new AWS.Rekognition({
@@ -157,18 +157,8 @@ app.post('/api/users/image_identification', multerImages, async function (req: a
                     }
 
                     response.data = resp
-                    //console.log(detections);
-                    if (detections.includes('NICOLAS') && 
-                    detections.includes('GALINANES') && 
-                    detections.includes('39.096.325')) {
-                        res.status(200).send(response)
-                        console.log("Este es el DNI de Nicolas Galinanes")
-                    } else {
-                        res.status(200).send(response)
-                        console.log("Este no es el DNI de Nicolas Galinanes")
-                    }
                     
-                    //res.status(200).send(response)
+                    res.status(200).send(response)
                 });
     
             }, photoUrl)

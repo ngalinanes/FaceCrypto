@@ -6,6 +6,7 @@ import axios from 'axios';
 import * as SQLite from 'expo-sqlite'
 import DBHelper from './components/DBHelper';
 import {Share} from 'react-native';
+import logo from './assets/logo.png'; 
 
 const db = SQLite.openDatabase(
   {
@@ -56,7 +57,7 @@ export default function App() {
 
   const shareMessage = (wallet, moneda) => {
     Share.share({
-      message: 'FaceCrypto. Te comparto mi wallet de '+moneda+': '+wallet
+      message: 'CryptoFace. Te comparto mi wallet de '+moneda+': '+wallet
     })
       .then((result) => console.log(result))
       .catch((errorMsg) => console.log(errorMsg));
@@ -151,7 +152,8 @@ export default function App() {
 {modalLogin &&
 <Modal>
     <View style={styles.container}>
-        <Text style={{ textAlign: 'center', marginTop: 150, fontSize: 50 }}>Bienvenido </Text>
+    <Image source={logo} style={{ width: 200, height: 200, marginLeft: 100, marginTop: 40 }} />
+        <Text style={{ textAlign: 'center', fontSize: 50 }}>CryptoFace </Text>
           <TextInput placeholder={"Ingresa tu DNI - ##.###.###"}
           onChangeText={(value) => setDni(value)}
           style={{ height: 42, width: "50%", borderBottomWidth: 1, marginLeft: 100, marginTop: "5%"}}
@@ -219,10 +221,10 @@ export default function App() {
                                         if (dbHelper.newItem(nombre,password,dni,repassword)){
                                           setModalRegistro(false);
                                           setModalLogin(true);
-                                        } else { 
-                                          Vibration.vibrate();
-                                          Alert.alert('Error!','Los datos ingresados no son correctos.')
-                                         }
+                                         } // else { 
+                                        //   Vibration.vibrate();
+                                        //   Alert.alert('Error!','Los datos ingresados no son correctos.')
+                                        //  }
                                        }
                                      }
                                        >
@@ -253,7 +255,7 @@ export default function App() {
 {modalInicioValidado &&
 <Modal>
     <ScrollView style={styles.container}>
-        <Text style={{ textAlign: 'center', marginTop: 50, fontSize: 20 }}>FaceCrypto - Dashboard</Text>
+        <Text style={{ textAlign: 'center', marginTop: 50, fontSize: 20 }}>CryptoFace - Dashboard</Text>
         <Text style={{ textAlign: 'center', marginTop: 20, fontSize: 25 }}>Saldo en dolares: U$S {saldo}</Text>
         <Text style={{ textAlign: 'center', marginTop: 60, fontSize: 25 }}>Recarga tu saldo:</Text>
         <TextInput placeholder={"Cuanto queres recargar?"}
